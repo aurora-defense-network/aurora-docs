@@ -1,5 +1,3 @@
-Quickstart für späteren Betrieb
-docs/getting-started/quickstart.md
 # Aurora Quickstart
 
 This quickstart provides a high-level path for setting up Aurora components.
@@ -8,11 +6,13 @@ This quickstart provides a high-level path for setting up Aurora components.
 
 ## Intended Basic Flow
 
-1. Install the Aurora component you need
-2. Configure the service
-3. Start the service
-4. Verify health and readiness
-5. Connect the component to the Aurora environment
+1. Install the Aurora component you need  
+2. Configure the service  
+3. Start the service  
+4. Verify health and readiness  
+5. Connect the component to the Aurora environment  
+
+---
 
 ## Core Service Example
 
@@ -23,74 +23,255 @@ sudo apt update
 sudo apt install aurora-core
 sudo systemctl enable aurora-core
 sudo systemctl start aurora-core
-Verify Status
-curl http://localhost:8080/healthz
-curl http://localhost:8080/readyz
-Node Agent Example
+```
 
-Expected flow:
+### Verify Status
 
-sudo apt install aurora-node-agent
-sudo systemctl enable aurora-node-agent
-sudo systemctl start aurora-node-agent
-Notes
+```bash
+curl http://localhost:<aurora-port>/healthz
+curl http://localhost:<aurora-port>/readyz
+```
 
-This quickstart intentionally stays high level.
-Detailed installation, configuration and production hardening guidance belongs in the operations documentation.
-
+For local testing the service may expose HTTP on localhost.
+Production deployments typically use HTTPS with Aurora's PKI and mTLS configuration.
 
 ---
 
-# Systemanforderungen
+## Node Agent Example
 
-## `docs/getting-started/system-requirements.md`
+Expected flow:
 
-```markdown
+```bash
+sudo apt install aurora-node-agent
+sudo systemctl enable aurora-node-agent
+sudo systemctl start aurora-node-agent
+```
+
+---
+
+## Notes
+
+This quickstart intentionally stays high level.
+
+Detailed installation, configuration and production hardening guidance belongs in the operations documentation.
+
+---
+
+# System Requirements
+
+**File location**
+
+```
+docs/getting-started/system-requirements.md
+```
+
+---
+
 # System Requirements
 
 This document describes the expected baseline requirements for Aurora components.
 
-## Supported Platform Direction
+Aurora is designed to run on standard Linux infrastructure and scale from small test deployments to larger distributed environments.
 
-Aurora is currently targeting Linux-based deployment environments, with a focus on:
+These requirements represent current development targets and may evolve as the system matures.
+
+---
+
+## Supported Platforms
+
+Aurora is currently targeting Linux-based deployment environments with a focus on:
 
 - Debian 12
-- Ubuntu 22.04 / 24.04
+- Ubuntu 22.04
+- Ubuntu 24.04
+- systemd-based service environments
 
-## Aurora Core
+Other Linux distributions may work but are not currently tested.
 
-Preliminary baseline:
+---
 
-- 2 vCPU minimum
-- 4 GB RAM minimum
-- 20 GB storage
-- reliable network connectivity
-- systemd-based service environment
+# Aurora Components
 
-## Aurora Node Agent
+Aurora consists of several components with different resource profiles.
 
-Preliminary baseline:
+Main components include:
 
-- 1-2 vCPU
-- 2 GB RAM minimum
-- local outbound connectivity to Aurora services
-- certificate storage capability
-- systemd-based service environment
+- **Aurora Core**
+- **Aurora Node Agent**
+- **Aurora Simulator**
 
-## Simulator
+Each component has its own baseline requirements.
 
-Preliminary baseline:
+---
 
-- depends on simulation scale
-- recommended: 4+ vCPU
-- recommended: 8+ GB RAM for larger test runs
+# Aurora Core
 
-## Notes
+Aurora Core acts as the **control plane** of the Aurora defense network.
 
-Production sizing depends on:
+Responsibilities include:
 
-- node count
+- node registration
+- policy distribution
+- telemetry ingestion
+- routing decisions
+- incident coordination
+- certificate workflows
+
+### Minimum Requirements
+
+| Resource | Minimum |
+|---------|---------|
+| CPU | 2 vCPU |
+| RAM | 4 GB |
+| Storage | 20 GB |
+| Network | reliable connectivity |
+
+Aurora Core expects a **systemd-based Linux service environment**.
+
+---
+
+### Recommended for Production
+
+| Resource | Recommended |
+|---------|-------------|
+| CPU | 4+ vCPU |
+| RAM | 8+ GB |
+| Storage | 50+ GB |
+| Network | low-latency stable connection |
+
+Additional capacity may be required depending on:
+
 - telemetry volume
+- node count
+- mitigation workload
 - routing decision rate
-- mitigation complexity
-- observability stack size
+
+---
+
+# Aurora Node Agent
+
+The Aurora Node Agent runs on infrastructure nodes participating in the Aurora network.
+
+Responsibilities include:
+
+- node enrollment
+- telemetry reporting
+- policy enforcement
+- certificate renewal
+- local health reporting
+
+### Minimum Requirements
+
+| Resource | Minimum |
+|---------|---------|
+| CPU | 1 vCPU |
+| RAM | 2 GB |
+| Storage | 10 GB |
+| Network | outbound connectivity |
+
+The Node Agent requires:
+
+- outbound connectivity to Aurora services
+- certificate storage capability
+- systemd service support
+
+---
+
+### Recommended
+
+| Resource | Recommended |
+|---------|-------------|
+| CPU | 2+ vCPU |
+| RAM | 4+ GB |
+| Storage | 20 GB |
+| Network | stable high bandwidth |
+
+The Node Agent is designed to run on a wide range of infrastructure systems.
+
+---
+
+# Aurora Simulator
+
+The Aurora Simulator is used for:
+
+- testing
+- development
+- resilience validation
+- chaos and failure testing
+
+Responsibilities include:
+
+- simulated nodes
+- simulated attack traffic
+- routing behavior testing
+- chaos scenarios
+
+### Minimum Requirements
+
+| Resource | Minimum |
+|---------|---------|
+| CPU | 4 vCPU |
+| RAM | 8 GB |
+| Storage | 20 GB |
+
+---
+
+### Recommended for Large Simulations
+
+| Resource | Recommended |
+|---------|-------------|
+| CPU | 8+ vCPU |
+| RAM | 16+ GB |
+| Storage | 50+ GB |
+
+Simulation resource usage scales with:
+
+- number of simulated nodes
+- traffic volume
+- complexity of scenarios
+
+---
+
+# Network Requirements
+
+Aurora components require basic network connectivity.
+
+Typical requirements include:
+
+- outbound HTTPS connectivity
+- ability to reach Aurora services
+- low-latency connections between distributed nodes
+
+Exact network topology depends on the deployment architecture.
+
+---
+
+# Operating System Environment
+
+Aurora services are designed to run in a standard Linux service environment.
+
+Typical filesystem layout:
+
+```
+/etc/aurora      configuration
+/var/lib/aurora  runtime data
+/var/log/aurora  logs
+/usr/lib/aurora  binaries
+```
+
+Aurora services are expected to be managed using **systemd**.
+
+---
+
+# Future Requirements
+
+As Aurora evolves, additional requirements may emerge related to:
+
+- telemetry scale
+- detection workloads
+- routing complexity
+- mitigation capabilities
+- observability stack integration
+
+These requirements will be documented as the system approaches production readiness.
+
